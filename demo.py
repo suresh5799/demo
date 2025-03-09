@@ -3,7 +3,7 @@ import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# Debug: Check if secrets are loaded
+# ✅ Load Service Account Credentials
 try:
     service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
     credentials = service_account.Credentials.from_service_account_info(service_account_info)
@@ -12,20 +12,20 @@ try:
 except Exception as e:
     st.error(f"❌ Google Drive API connection failed: {e}")
 
-# Debug: Check if Drive files are listed
+# ✅ Define the Google Drive Folder ID
+FOLDER_ID = "1N36EC-B3dN7wx3wUYC732os1S6RzjwHh"  # 🔴 Replace with your actual Google Drive Folder ID
+
+# ✅ Fetch Files from the Specific Folder
 try:
-    results = drive_service.files().list(pageSize=10).execute()
+    query = f"'{FOLDER_ID}' in parents and mimeType='application/pdf'"
+    results = drive_service.files().list(q=query, pageSize=10).execute()
     files = results.get("files", [])
+
     if not files:
-        st.warning("⚠️ No files found in Google Drive.")
+        st.warning("⚠️ No PDF files found in the folder.")
     else:
-        st.write("📂 Files in Google Drive:")
+        st.write("📂 PDF Files in the Folder:")
         for file in files:
             st.write(f"{file['name']} ({file['id']})")
 except Exception as e:
     st.error(f"❌ Failed to fetch files: {e}")
-
-# Debug: Check if search input is working
-query = st.text_input("Enter the Goal Name (e.g., Secure Flash)")
-if query:
-    st.write(f"🔍 Searching for: {query}")
