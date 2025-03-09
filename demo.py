@@ -3,28 +3,29 @@ import json
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# Load credentials
-service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
-creds = service_account.Credentials.from_service_account_info(service_account_info)
-
-# Connect to Google Drive API
-drive_service = build("drive", "v3", credentials=creds)
-
-# Define Folder ID
-FOLDER_ID = "1N36EC-B3dN7wx3wUYC732os1S6RzjwHh"  # Replace with actual Google Drive Folder ID
-
-# Query Google Drive API
-query = f"'{FOLDER_ID}' in parents and trashed=false"
+# Debug: Check if secrets are loaded
 try:
-    results = drive_service.files().list(q=query, fields="files(id, name)").execute()
-    st.write("*API Response:*", results)  # Print raw API response for debugging
-    files = results.get("files", [])
-
-    if files:
-        st.write("### Google Drive Files:")
-        for file in files:
-            st.write(f"📄 {file['name']} (ID: {file['id']})")
-    else:
-        st.write("⚠️ No files found in Google Drive.")
+    service_account_info = json.loads(st.secrets["GOOGLE_SERVICE_ACCOUNT"])
+    credentials = service_account.Credentials.from_service_account_info(service_account_info)
+    drive_service = build('drive', 'v3', credentials=credentials)
+    st.write("✅ Google Drive API connected successfully!")
 except Exception as e:
-    st.error(f"Error fetching files: {str(e)}")
+    st.error(f"❌ Google Drive API connection failed: {e}")
+
+# Debug: Check if Drive files are listed
+try:
+    results = drive_service.files().list(pageSize=10).execute()
+    files = results.get("files", [])
+    if not files:
+        st.warning("⚠️ No files found in Google Drive.")
+    else:
+        st.write("📂 Files in Google Drive:")
+        for file in files:
+            st.write(f"{file['name']} ({file['id']})")
+except Exception as e:
+    st.error(f"❌ Failed to fetch files: {e}")
+
+# Debug: Check if search input is working
+query = st.text_input("Enter the Goal Name (e.g., Secure Flash)")
+if query:
+    st.write(f"🔍 Searching for: {query}")
